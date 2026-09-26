@@ -1,1 +1,885 @@
+--==================================================
+-- KIO TSB
+-- LOADING + KIO TOGGLE + FIX LAG + BOMBОX + RAINBOW BUBBLES
+-- FIX LAG: EFFECTS + ROCKS + TREES + SKILL COLORS/LIGHTS
+-- ROBLOX STUDIO - LocalScript
+--==================================================
 
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+--==================================================
+-- XÓA UI CŨ
+--==================================================
+
+local oldGui = playerGui:FindFirstChild("KiominhmiuTSB")
+if oldGui then
+	oldGui:Destroy()
+end
+
+--==================================================
+-- GUI
+--==================================================
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "KiominhmiuTSB"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = playerGui
+
+--==================================================
+-- LOADING
+--==================================================
+
+local loading = Instance.new("Frame")
+loading.Size = UDim2.fromScale(1, 1)
+loading.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+loading.BorderSizePixel = 0
+loading.ZIndex = 100
+loading.Parent = gui
+
+local loadingTitle = Instance.new("TextLabel")
+loadingTitle.Size = UDim2.new(1, 0, 0, 70)
+loadingTitle.Position = UDim2.new(0, 0, 0.38, 0)
+loadingTitle.BackgroundTransparency = 1
+loadingTitle.Text = "kiominhmiu"
+loadingTitle.TextColor3 = Color3.new(1, 1, 1)
+loadingTitle.Font = Enum.Font.GothamBold
+loadingTitle.TextScaled = true
+loadingTitle.ZIndex = 101
+loadingTitle.Parent = loading
+
+local loadingPercent = Instance.new("TextLabel")
+loadingPercent.Size = UDim2.new(1, 0, 0, 40)
+loadingPercent.Position = UDim2.new(0, 0, 0.49, 0)
+loadingPercent.BackgroundTransparency = 1
+loadingPercent.Text = "0%"
+loadingPercent.TextColor3 = Color3.new(1, 1, 1)
+loadingPercent.Font = Enum.Font.GothamBold
+loadingPercent.TextScaled = true
+loadingPercent.ZIndex = 101
+loadingPercent.Parent = loading
+
+local barBack = Instance.new("Frame")
+barBack.Size = UDim2.new(0, 260, 0, 8)
+barBack.AnchorPoint = Vector2.new(0.5, 0)
+barBack.Position = UDim2.new(0.5, 0, 0.57, 0)
+barBack.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+barBack.BorderSizePixel = 0
+barBack.ZIndex = 101
+barBack.Parent = loading
+
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(1, 0)
+barCorner.Parent = barBack
+
+local bar = Instance.new("Frame")
+bar.Size = UDim2.new(0, 0, 1, 0)
+bar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+bar.BorderSizePixel = 0
+bar.ZIndex = 102
+bar.Parent = barBack
+
+local barFillCorner = Instance.new("UICorner")
+barFillCorner.CornerRadius = UDim.new(1, 0)
+barFillCorner.Parent = bar
+
+for i = 1, 100 do
+	bar.Size = UDim2.new(i / 100, 0, 1, 0)
+	loadingPercent.Text = tostring(i) .. "%"
+	task.wait(0.018)
+end
+
+TweenService:Create(
+	loading,
+	TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	{BackgroundTransparency = 1}
+):Play()
+
+TweenService:Create(
+	loadingTitle,
+	TweenInfo.new(0.8),
+	{TextTransparency = 1}
+):Play()
+
+TweenService:Create(
+	loadingPercent,
+	TweenInfo.new(0.8),
+	{TextTransparency = 1}
+):Play()
+
+TweenService:Create(
+	barBack,
+	TweenInfo.new(0.8),
+	{BackgroundTransparency = 1}
+):Play()
+
+TweenService:Create(
+	bar,
+	TweenInfo.new(0.8),
+	{BackgroundTransparency = 1}
+):Play()
+
+task.wait(0.85)
+loading:Destroy()
+
+--==================================================
+-- MAIN PANEL
+--==================================================
+
+local main = Instance.new("Frame")
+main.Name = "MainPanel"
+main.Size = UDim2.new(0, 320, 0, 400)
+main.AnchorPoint = Vector2.new(0.5, 0.5)
+main.Position = UDim2.new(0.5, 0, 0.5, 0)
+main.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
+main.BorderSizePixel = 0
+main.Visible = false
+main.ClipsDescendants = false
+main.Parent = gui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 16)
+mainCorner.Parent = main
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Thickness = 2.5
+mainStroke.Parent = main
+
+local mainScale = Instance.new("UIScale")
+mainScale.Scale = 0.15
+mainScale.Parent = main
+
+--==================================================
+-- TITLE
+--==================================================
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 0, 45)
+title.Position = UDim2.new(0.5, 0, 0, 10)
+title.AnchorPoint = Vector2.new(0.5, 0)
+title.BackgroundTransparency = 1
+title.Text = "kiominhmiu tsb"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+title.Parent = main
+
+--==================================================
+-- KIO BUTTON
+--==================================================
+
+local kioButton = Instance.new("TextButton")
+kioButton.Name = "KIO"
+kioButton.Size = UDim2.new(0, 65, 0, 40)
+kioButton.Position = UDim2.new(0, 15, 0.5, 0)
+kioButton.AnchorPoint = Vector2.new(0, 0.5)
+kioButton.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+kioButton.Text = "KIO"
+kioButton.TextColor3 = Color3.new(1, 1, 1)
+kioButton.Font = Enum.Font.GothamBold
+kioButton.TextSize = 16
+kioButton.AutoButtonColor = false
+kioButton.ZIndex = 50
+kioButton.Parent = gui
+
+local kioCorner = Instance.new("UICorner")
+kioCorner.CornerRadius = UDim.new(0, 10)
+kioCorner.Parent = kioButton
+
+local toggleStroke = Instance.new("UIStroke")
+toggleStroke.Thickness = 2
+toggleStroke.Parent = kioButton
+
+--==================================================
+-- DRAG KIO BUTTON
+--==================================================
+
+local dragging = false
+local dragStart
+local startPos
+
+local function updateDrag(input)
+	local delta = input.Position - dragStart
+
+	kioButton.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
+
+kioButton.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
+		dragging = true
+		dragStart = input.Position
+		startPos = kioButton.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging then
+		if input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch then
+			updateDrag(input)
+		end
+	end
+end)
+
+--==================================================
+-- FIX LAG BUTTON
+--==================================================
+
+local fixLagButton = Instance.new("TextButton")
+fixLagButton.Name = "FixLag"
+fixLagButton.Size = UDim2.new(0, 105, 0, 36)
+fixLagButton.Position = UDim2.new(0.5, 0, 0, 72)
+fixLagButton.AnchorPoint = Vector2.new(0.5, 0)
+fixLagButton.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+fixLagButton.Text = "FIX LAG: OFF"
+fixLagButton.TextColor3 = Color3.new(1, 1, 1)
+fixLagButton.Font = Enum.Font.GothamBold
+fixLagButton.TextSize = 13
+fixLagButton.AutoButtonColor = false
+fixLagButton.Parent = main
+
+local fixCorner = Instance.new("UICorner")
+fixCorner.CornerRadius = UDim.new(0, 10)
+fixCorner.Parent = fixLagButton
+
+local fixStroke = Instance.new("UIStroke")
+fixStroke.Thickness = 2
+fixStroke.Parent = fixLagButton
+
+--==================================================
+-- BOMBOX
+--==================================================
+
+local bomboxButton = Instance.new("TextButton")
+bomboxButton.Name = "Bombox"
+bomboxButton.Size = UDim2.new(0, 120, 0, 40)
+bomboxButton.Position = UDim2.new(0.5, 0, 0, 125)
+bomboxButton.AnchorPoint = Vector2.new(0.5, 0)
+bomboxButton.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+bomboxButton.Text = "bombox"
+bomboxButton.TextColor3 = Color3.new(1, 1, 1)
+bomboxButton.Font = Enum.Font.GothamBold
+bomboxButton.TextSize = 15
+bomboxButton.AutoButtonColor = false
+bomboxButton.Parent = main
+
+local bomboxCorner = Instance.new("UICorner")
+bomboxCorner.CornerRadius = UDim.new(0, 10)
+bomboxCorner.Parent = bomboxButton
+
+local bomboxStroke = Instance.new("UIStroke")
+bomboxStroke.Thickness = 2
+bomboxStroke.Parent = bomboxButton
+
+--==================================================
+-- BOMBOX MENU
+--==================================================
+
+local musicFrame = Instance.new("Frame")
+musicFrame.Name = "MusicFrame"
+musicFrame.Size = UDim2.new(0, 210, 0, 170)
+musicFrame.Position = UDim2.new(0.5, 0, 0, 175)
+musicFrame.AnchorPoint = Vector2.new(0.5, 0)
+musicFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
+musicFrame.BorderSizePixel = 0
+musicFrame.Visible = false
+musicFrame.Parent = main
+
+local musicCorner = Instance.new("UICorner")
+musicCorner.CornerRadius = UDim.new(0, 12)
+musicCorner.Parent = musicFrame
+
+local musicIDs = {
+	"110655017987589",
+	"104407363987058",
+	"76056556384462"
+}
+
+local currentSound = nil
+
+local function stopMusic()
+	if currentSound then
+		pcall(function()
+			currentSound:Stop()
+			currentSound:Destroy()
+		end)
+
+		currentSound = nil
+	end
+end
+
+local function playMusic(id)
+	stopMusic()
+
+	local sound = Instance.new("Sound")
+	sound.Name = "KIO_BomboxMusic"
+	sound.SoundId = "rbxassetid://" .. id
+	sound.Volume = 1
+	sound.Looped = true
+	sound.Parent = Workspace
+
+	currentSound = sound
+
+	pcall(function()
+		sound:Play()
+	end)
+end
+
+for i, id in ipairs(musicIDs) do
+	local button = Instance.new("TextButton")
+
+	button.Size = UDim2.new(1, -20, 0, 35)
+	button.Position = UDim2.new(0, 10, 0, 8 + ((i - 1) * 40))
+	button.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+	button.Text = "Music " .. i
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 13
+	button.AutoButtonColor = false
+	button.Parent = musicFrame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = button
+
+	button.MouseButton1Click:Connect(function()
+		playMusic(id)
+	end)
+end
+
+local stopButton = Instance.new("TextButton")
+stopButton.Size = UDim2.new(1, -20, 0, 35)
+stopButton.Position = UDim2.new(0, 10, 0, 128)
+stopButton.BackgroundColor3 = Color3.fromRGB(35, 25, 30)
+stopButton.Text = "STOP"
+stopButton.TextColor3 = Color3.new(1, 1, 1)
+stopButton.Font = Enum.Font.GothamBold
+stopButton.TextSize = 13
+stopButton.AutoButtonColor = false
+stopButton.Parent = musicFrame
+
+local stopCorner = Instance.new("UICorner")
+stopCorner.CornerRadius = UDim.new(0, 8)
+stopCorner.Parent = stopButton
+
+stopButton.MouseButton1Click:Connect(function()
+	stopMusic()
+end)
+
+bomboxButton.MouseButton1Click:Connect(function()
+	musicFrame.Visible = not musicFrame.Visible
+end)
+
+--==================================================
+-- RAINBOW BUBBLES
+--==================================================
+
+local bubbleContainer = Instance.new("Frame")
+bubbleContainer.Size = UDim2.fromScale(1, 1)
+bubbleContainer.BackgroundTransparency = 1
+bubbleContainer.BorderSizePixel = 0
+bubbleContainer.ZIndex = 30
+bubbleContainer.Parent = main
+
+local beatPower = 0
+
+local function createBubble(power)
+	local bubble = Instance.new("Frame")
+
+	local size = math.random(7, 14)
+	local edge = math.random(1, 4)
+
+	local x
+	local y
+
+	if edge == 1 then
+		x = math.random(0, 320)
+		y = 0
+	elseif edge == 2 then
+		x = 320
+		y = math.random(0, 400)
+	elseif edge == 3 then
+		x = math.random(0, 320)
+		y = 400
+	else
+		x = 0
+		y = math.random(0, 400)
+	end
+
+	bubble.Size = UDim2.new(0, size, 0, size)
+	bubble.Position = UDim2.new(0, x, 0, y)
+	bubble.BackgroundColor3 = Color3.fromHSV(math.random(), 0.9, 1)
+	bubble.BorderSizePixel = 0
+	bubble.ZIndex = 31
+	bubble.Parent = bubbleContainer
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = bubble
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1.5
+	stroke.Color = bubble.BackgroundColor3
+	stroke.Parent = bubble
+
+	local grow = 1.8 + (power * 1.8)
+
+	local targetX = x + math.random(-40, 40)
+	local targetY = y - math.random(40, 110)
+
+	local tween = TweenService:Create(
+		bubble,
+		TweenInfo.new(
+			math.random(15, 25) / 10,
+			Enum.EasingStyle.Quad,
+			Enum.EasingDirection.Out
+		),
+		{
+			Position = UDim2.new(0, targetX, 0, targetY),
+			Size = UDim2.new(0, size * grow, 0, size * grow),
+			BackgroundTransparency = 1
+		}
+	)
+
+	local strokeTween = TweenService:Create(
+		stroke,
+		TweenInfo.new(2),
+		{
+			Transparency = 1
+		}
+	)
+
+	tween:Play()
+	strokeTween:Play()
+
+	tween.Completed:Connect(function()
+		if bubble then
+			bubble:Destroy()
+		end
+	end)
+end
+
+--==================================================
+-- FIX LAG
+--==================================================
+
+local fixLagEnabled = false
+local fixLagConnection = nil
+
+-- Những class hiệu ứng sẽ bị xoá
+local effectClasses = {
+	ParticleEmitter = true,
+	Trail = true,
+	Beam = true,
+	Smoke = true,
+	Fire = true,
+	Sparkles = true,
+
+	-- Hiệu ứng ánh sáng/màu của skill
+	PointLight = true,
+	SpotLight = true,
+	SurfaceLight = true,
+
+	-- Một số hiệu ứng hiển thị khác
+	Highlight = true,
+	SelectionBox = true,
+	BoxHandleAdornment = true,
+	SphereHandleAdornment = true,
+	CylinderHandleAdornment = true,
+	Explosion = true,
+}
+
+-- Tên thường gặp của effect / debris / skill color
+local removeWords = {
+	-- EFFECT
+	"effect",
+	"effects",
+	"vfx",
+	"fx",
+	"particle",
+	"particles",
+	"trail",
+	"beam",
+	"smoke",
+	"fire",
+	"spark",
+	"sparks",
+	"dust",
+	"aura",
+	"glow",
+	"light",
+	"flash",
+	"flare",
+	"shine",
+	"energy",
+	"visual",
+	"visuals",
+
+	-- COLOR
+	"color",
+	"colour",
+	"rainbow",
+	"neon",
+	"gradient",
+	"glowing",
+
+	-- ROCK / GROUND
+	"rock",
+	"rocks",
+	"rockdebris",
+	"rock_debris",
+	"debris",
+	"grounddebris",
+	"ground_debris",
+	"skilldebris",
+	"skill_debris",
+	"fragment",
+	"fragments",
+	"rubble",
+	"stone",
+	"stones",
+
+	-- TREES
+	"tree",
+	"trees",
+	"bush",
+	"bushes",
+	"shrub",
+	"shrubs",
+	"plant",
+	"plants",
+	"palm",
+	"palm_tree",
+	"palmtree",
+}
+
+-- Một số tên map phổ biến được bảo vệ
+local protectedNames = {
+	ground = true,
+	baseplate = true,
+	terrain = true,
+	part = true,
+	meshpart = true,
+	union = true,
+	floor = true,
+	wall = true,
+	map = true,
+}
+
+local function hasRemoveWord(name)
+	name = string.lower(name)
+
+	if protectedNames[name] then
+		return false
+	end
+
+	for _, word in ipairs(removeWords) do
+		if string.find(name, word, 1, true) then
+			return true
+		end
+	end
+
+	return false
+end
+
+local function shouldRemoveObject(obj)
+	if effectClasses[obj.ClassName] then
+		return true
+	end
+
+	if hasRemoveWord(obj.Name) then
+		return true
+	end
+
+	return false
+end
+
+local function cleanObject(obj)
+	if not obj or not obj.Parent then
+		return
+	end
+
+	if shouldRemoveObject(obj) then
+		pcall(function()
+			obj:Destroy()
+		end)
+
+		return
+	end
+
+	-- Xoá màu/ánh sáng trực tiếp gắn trên object
+	if obj:IsA("BasePart") then
+		-- Chỉ xử lý những part có tên rõ ràng là hiệu ứng.
+		if hasRemoveWord(obj.Name) then
+			pcall(function()
+				obj:Destroy()
+			end)
+			return
+		end
+	end
+end
+
+local function cleanWorkspace()
+	for _, obj in ipairs(Workspace:GetDescendants()) do
+		cleanObject(obj)
+	end
+end
+
+local function startFixLag()
+	if fixLagEnabled then
+		return
+	end
+
+	fixLagEnabled = true
+	fixLagButton.Text = "FIX LAG: ON"
+
+	-- Dọn toàn bộ hiệu ứng hiện tại
+	cleanWorkspace()
+
+	-- Dọn ngay khi skill spawn effect mới
+	fixLagConnection = Workspace.DescendantAdded:Connect(function(obj)
+		if not fixLagEnabled then
+			return
+		end
+
+		cleanObject(obj)
+
+		task.defer(function()
+			if not fixLagEnabled then
+				return
+			end
+
+			if not obj or not obj.Parent then
+				return
+			end
+
+			cleanObject(obj)
+
+			for _, child in ipairs(obj:GetDescendants()) do
+				cleanObject(child)
+			end
+		end)
+	end)
+end
+
+local function stopFixLag()
+	fixLagEnabled = false
+	fixLagButton.Text = "FIX LAG: OFF"
+
+	if fixLagConnection then
+		fixLagConnection:Disconnect()
+		fixLagConnection = nil
+	end
+end
+
+fixLagButton.MouseButton1Click:Connect(function()
+	if fixLagEnabled then
+		stopFixLag()
+	else
+		startFixLag()
+	end
+end)
+
+--==================================================
+-- KIO OPEN / CLOSE
+--==================================================
+
+local panelOpen = false
+local animating = false
+
+local function openPanel()
+	if animating or panelOpen then
+		return
+	end
+
+	animating = true
+	panelOpen = true
+
+	main.Visible = true
+
+	local buttonPos = kioButton.AbsolutePosition
+	local buttonSize = kioButton.AbsoluteSize
+
+	local centerX = workspace.CurrentCamera.ViewportSize.X / 2
+	local centerY = workspace.CurrentCamera.ViewportSize.Y / 2
+
+	main.Position = UDim2.new(
+		0,
+		buttonPos.X + buttonSize.X / 2,
+		0,
+		buttonPos.Y + buttonSize.Y / 2
+	)
+
+	mainScale.Scale = 0.15
+
+	local moveTween = TweenService:Create(
+		main,
+		TweenInfo.new(
+			0.45,
+			Enum.EasingStyle.Quint,
+			Enum.EasingDirection.Out
+		),
+		{
+			Position = UDim2.new(0.5, 0, 0.5, 0)
+		}
+	)
+
+	local scaleTween = TweenService:Create(
+		mainScale,
+		TweenInfo.new(
+			0.45,
+			Enum.EasingStyle.Back,
+			Enum.EasingDirection.Out
+		),
+		{
+			Scale = 1
+		}
+	)
+
+	moveTween:Play()
+	scaleTween:Play()
+
+	scaleTween.Completed:Wait()
+
+	animating = false
+end
+
+local function closePanel()
+	if animating or not panelOpen then
+		return
+	end
+
+	animating = true
+	panelOpen = false
+
+	local buttonPos = kioButton.AbsolutePosition
+	local buttonSize = kioButton.AbsoluteSize
+
+	local targetX = buttonPos.X + buttonSize.X / 2
+	local targetY = buttonPos.Y + buttonSize.Y / 2
+
+	local moveTween = TweenService:Create(
+		main,
+		TweenInfo.new(
+			0.35,
+			Enum.EasingStyle.Quint,
+			Enum.EasingDirection.In
+		),
+		{
+			Position = UDim2.new(
+				0,
+				targetX,
+				0,
+				targetY
+			)
+		}
+	)
+
+	local scaleTween = TweenService:Create(
+		mainScale,
+		TweenInfo.new(
+			0.35,
+			Enum.EasingStyle.Back,
+			Enum.EasingDirection.In
+		),
+		{
+			Scale = 0.15
+		}
+	)
+
+	moveTween:Play()
+	scaleTween:Play()
+
+	scaleTween.Completed:Wait()
+
+	main.Visible = false
+	animating = false
+end
+
+kioButton.MouseButton1Click:Connect(function()
+	if panelOpen then
+		closePanel()
+	else
+		openPanel()
+	end
+end)
+
+--==================================================
+-- RAINBOW + MUSIC BUBBLES
+--==================================================
+
+local hue = 0
+local lastBubble = 0
+
+RunService.RenderStepped:Connect(function(deltaTime)
+	hue = (hue + deltaTime * 0.15) % 1
+
+	local rainbow = Color3.fromHSV(hue, 1, 1)
+
+	mainStroke.Color = rainbow
+	toggleStroke.Color = rainbow
+	bomboxStroke.Color = rainbow
+	fixStroke.Color = rainbow
+
+	local loudness = 0
+
+	if currentSound and currentSound.IsPlaying then
+		loudness = math.clamp(
+			currentSound.PlaybackLoudness / 250,
+			0,
+			1
+		)
+	end
+
+	beatPower = beatPower + (loudness - beatPower) * 0.18
+
+	local now = os.clock()
+
+	if currentSound and currentSound.IsPlaying then
+		local interval = 0.28 - (beatPower * 0.16)
+
+		if now - lastBubble >= interval then
+			lastBubble = now
+
+			local amount = 1
+
+			if beatPower > 0.65 then
+				amount = 2
+			end
+
+			for i = 1, amount do
+				createBubble(beatPower)
+			end
+		end
+	end
+
+	mainStroke.Thickness = 2.5 + (beatPower * 2.5)
+end)
+
+--==================================================
+-- MỞ PANEL SAU KHI LOAD
+--==================================================
+
+task.wait(0.15)
+openPanel()
