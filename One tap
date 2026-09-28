@@ -1,0 +1,24 @@
+-- KIO ONE-TAP PICKUP
+-- Nhấn 1 lần để nhặt vật phẩm, không cần giữ
+
+local ProximityPromptService = game:GetService("ProximityPromptService")
+
+local function makeInstant(prompt)
+	if prompt:IsA("ProximityPrompt") then
+		prompt.HoldDuration = 0
+	end
+end
+
+-- Các prompt đã có
+for _, obj in ipairs(workspace:GetDescendants()) do
+	makeInstant(obj)
+end
+
+-- Prompt mới xuất hiện cũng tự chuyển thành ấn 1 lần
+workspace.DescendantAdded:Connect(function(obj)
+	makeInstant(obj)
+end)
+
+ProximityPromptService.PromptShown:Connect(function(prompt)
+	makeInstant(prompt)
+end)
