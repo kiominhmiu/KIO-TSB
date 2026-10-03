@@ -1,0 +1,991 @@
+--==================================================
+-- KIOMINHMIU HUB V2
+-- ROBLOX STUDIO - LOCAL SCRIPT
+-- AIM NPC + PLAYER AIM
+-- NOCLIP + FLY + SPEED + FIX LAG + BOOMBOX
+--==================================================
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local Player = Players.LocalPlayer
+
+--==================================================
+-- STATE
+--==================================================
+
+local AimEnabled = false
+local PlayerAimEnabled = false
+local NoclipEnabled = false
+local FlyEnabled = false
+local SpeedEnabled = false
+local FixLagEnabled = false
+
+local SpeedValue = 50
+local FlySpeedValue = 50
+
+local Character
+local Humanoid
+local Root
+
+local AimTarget = nil
+
+local AimConnection
+local NoclipConnection
+local FlyConnection
+local FixLagConnection
+
+local FlyVelocity
+local FlyGyro
+
+local HubOpen = false
+local UpHeld = false
+local DownHeld = false
+
+--==================================================
+-- CHARACTER
+--==================================================
+
+local function UpdateCharacter(char)
+	Character = char
+	Humanoid = char:WaitForChild("Humanoid")
+	Root = char:WaitForChild("HumanoidRootPart")
+
+	if SpeedEnabled then
+		Humanoid.WalkSpeed = SpeedValue
+	end
+end
+
+if Player.Character then
+	UpdateCharacter(Player.Character)
+end
+
+Player.CharacterAdded:Connect(UpdateCharacter)
+
+--==================================================
+-- GUI
+--==================================================
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "KiominhmiuHubV2"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = Player:WaitForChild("PlayerGui")
+
+--==================================================
+-- HELPERS
+--==================================================
+
+local function Round(obj, radius)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius)
+	c.Parent = obj
+end
+
+local function RainbowStroke(obj)
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Parent = obj
+
+	task.spawn(function()
+		local hue = 0
+
+		while stroke.Parent do
+			hue = (hue + 0.005) % 1
+			stroke.Color = Color3.fromHSV(hue, 1, 1)
+			task.wait()
+		end
+	end)
+
+	return stroke
+end
+
+local function MakeDraggable(obj)
+	local dragging = false
+	local dragStart
+	local startPos
+
+	obj.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+
+			dragging = true
+			dragStart = input.Position
+			startPos = obj.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if not dragging then return end
+
+		if input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch then
+
+			local delta = input.Position - dragStart
+
+			obj.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+local function CreateButton(parent, text, size, position)
+	local b = Instance.new("TextButton")
+	b.Size = size
+	b.Position = position
+	b.BackgroundColor3 = Color3.fromRGB(25,25,35)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Text = text
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 13
+	b.AutoButtonColor = false
+	b.Parent = parent
+
+	Round(b, 10)
+
+	return b
+end
+
+local function CreateInput(parent, placeholder, value, position)
+	local box = Instance.new("TextBox")
+	box.Size = UDim2.new(0,100,0,34)
+	box.Position = position
+	box.BackgroundColor3 = Color3.fromRGB(22,22,30)
+	box.TextColor3 = Color3.new(1,1,1)
+	box.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+	box.PlaceholderText = placeholder
+	box.Text = tostring(value)
+	box.Font = Enum.Font.Gotham
+	box.TextSize = 13
+	box.ClearTextOnFocus = false
+	box.Parent = parent
+
+	Round(box, 8)
+
+	return box
+end
+
+--==================================================
+-- KIO BUTTON
+--==================================================
+
+local KIO = Instance.new("TextButton")
+KIO.Size = UDim2.new(0,65,0,40)
+KIO.Position = UDim2.new(0,20,0.7,0)
+KIO.BackgroundColor3 = Color3.fromRGB(15,15,22)
+KIO.Text = "KIO"
+KIO.TextColor3 = Color3.new(1,1,1)
+KIO.Font = Enum.Font.GothamBold
+KIO.TextSize = 16
+KIO.Parent = Gui
+
+Round(KIO,12)
+RainbowStroke(KIO)
+MakeDraggable(KIO)
+
+--==================================================
+-- MAIN
+--==================================================
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0,360,0,430)
+Main.Position = UDim2.new(0.5,-180,0.5,-215)
+Main.BackgroundColor3 = Color3.fromRGB(14,14,20)
+Main.Visible = false
+Main.Parent = Gui
+
+Round(Main,16)
+RainbowStroke(Main)
+MakeDraggable(Main)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1,-20,0,35)
+Title.Position = UDim2.new(0,10,0,8)
+Title.BackgroundTransparency = 1
+Title.Text = "kiominhmiu hub v2"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.Parent = Main
+
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1,-20,0,20)
+Status.Position = UDim2.new(0,10,0,40)
+Status.BackgroundTransparency = 1
+Status.Text = "Ready"
+Status.TextColor3 = Color3.fromRGB(160,160,170)
+Status.Font = Enum.Font.Gotham
+Status.TextSize = 11
+Status.Parent = Main
+
+--==================================================
+-- MAIN BUTTONS
+--==================================================
+
+local AimToggle = CreateButton(
+	Main,"AIM: OFF",
+	UDim2.new(0,75,0,40),
+	UDim2.new(0,10,0,70)
+)
+
+local NoclipToggle = CreateButton(
+	Main,"NOCLIP: OFF",
+	UDim2.new(0,80,0,40),
+	UDim2.new(0,90,0,70)
+)
+
+local FlyToggle = CreateButton(
+	Main,"FLY: OFF",
+	UDim2.new(0,75,0,40),
+	UDim2.new(0,175,0,70)
+)
+
+local SpeedToggle = CreateButton(
+	Main,"SPEED: OFF",
+	UDim2.new(0,90,0,40),
+	UDim2.new(0,255,0,70)
+)
+
+--==================================================
+-- SPEED INPUT
+--==================================================
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Size = UDim2.new(0,110,0,25)
+SpeedLabel.Position = UDim2.new(0,15,0,125)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Speed"
+SpeedLabel.TextColor3 = Color3.new(1,1,1)
+SpeedLabel.Font = Enum.Font.GothamBold
+SpeedLabel.TextSize = 13
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.Parent = Main
+
+local SpeedInput = CreateInput(
+	Main,"Speed",50,
+	UDim2.new(0,125,0,120)
+)
+
+SpeedInput.FocusLost:Connect(function()
+	local v = tonumber(SpeedInput.Text)
+
+	if v then
+		SpeedValue = math.clamp(v,1,250)
+		SpeedInput.Text = tostring(SpeedValue)
+
+		if SpeedEnabled and Humanoid then
+			Humanoid.WalkSpeed = SpeedValue
+		end
+	end
+end)
+
+--==================================================
+-- FLY SPEED
+--==================================================
+
+local FlySpeedLabel = Instance.new("TextLabel")
+FlySpeedLabel.Size = UDim2.new(0,110,0,25)
+FlySpeedLabel.Position = UDim2.new(0,15,0,165)
+FlySpeedLabel.BackgroundTransparency = 1
+FlySpeedLabel.Text = "Fly Speed"
+FlySpeedLabel.TextColor3 = Color3.new(1,1,1)
+FlySpeedLabel.Font = Enum.Font.GothamBold
+FlySpeedLabel.TextSize = 13
+FlySpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlySpeedLabel.Parent = Main
+
+local FlySpeedInput = CreateInput(
+	Main,"Fly Speed",50,
+	UDim2.new(0,125,0,160)
+)
+
+FlySpeedInput.FocusLost:Connect(function()
+	local v = tonumber(FlySpeedInput.Text)
+
+	if v then
+		FlySpeedValue = math.clamp(v,1,250)
+		FlySpeedInput.Text = tostring(FlySpeedValue)
+	end
+end)
+
+--==================================================
+-- FIX LAG
+--==================================================
+
+local FixLagToggle = CreateButton(
+	Main,"FIX LAG: OFF",
+	UDim2.new(0,155,0,40),
+	UDim2.new(0,15,0,205)
+)
+
+local EffectClasses = {
+	ParticleEmitter = true,
+	Trail = true,
+	Beam = true,
+	Smoke = true,
+	Fire = true,
+	Sparkles = true,
+	PointLight = true,
+	SpotLight = true,
+	SurfaceLight = true,
+	Highlight = true,
+	Explosion = true
+}
+
+local EffectKeywords = {
+	"effect","effects","vfx","skill","debris",
+	"dust","smoke","rock","rocks","fragment",
+	"fragments","tree","trees","grounddebris",
+	"ground_debris","screen_shake","screenshake"
+}
+
+local ProtectedNames = {
+	ground = true,
+	baseplate = true,
+	terrain = true,
+	map = true,
+	spawn = true
+}
+
+local function ShouldRemove(object)
+
+	if EffectClasses[object.ClassName] then
+		return true
+	end
+
+	local name = string.lower(object.Name)
+
+	if ProtectedNames[name] then
+		return false
+	end
+
+	for _, keyword in ipairs(EffectKeywords) do
+		if string.find(name,keyword,1,true) then
+			return true
+		end
+	end
+
+	return false
+end
+
+local function CleanEffects()
+	for _, object in ipairs(Workspace:GetDescendants()) do
+		if ShouldRemove(object) then
+			pcall(function()
+				object:Destroy()
+			end)
+		end
+	end
+end
+
+FixLagToggle.MouseButton1Click:Connect(function()
+
+	FixLagEnabled = not FixLagEnabled
+
+	if FixLagEnabled then
+
+		FixLagToggle.Text = "FIX LAG: ON"
+		Status.Text = "Fix Lag: ON"
+
+		CleanEffects()
+
+		if FixLagConnection then
+			FixLagConnection:Disconnect()
+		end
+
+		FixLagConnection =
+			Workspace.DescendantAdded:Connect(function(object)
+
+				if not FixLagEnabled then
+					return
+				end
+
+				task.defer(function()
+
+					if object
+						and object.Parent
+						and ShouldRemove(object) then
+
+						pcall(function()
+							object:Destroy()
+						end)
+
+					end
+				end)
+
+			end)
+
+	else
+
+		FixLagToggle.Text = "FIX LAG: OFF"
+		Status.Text = "Ready"
+
+		if FixLagConnection then
+			FixLagConnection:Disconnect()
+			FixLagConnection = nil
+		end
+
+	end
+end)
+
+--==================================================
+-- BOOMBOX
+--==================================================
+
+local BoomboxButton = CreateButton(
+	Main,"BOOMBOX",
+	UDim2.new(0,155,0,40),
+	UDim2.new(0,185,0,205)
+)
+
+local MusicFrame = Instance.new("Frame")
+MusicFrame.Size = UDim2.new(0,320,0,185)
+MusicFrame.Position = UDim2.new(0,20,0,255)
+MusicFrame.BackgroundColor3 = Color3.fromRGB(18,18,25)
+MusicFrame.Visible = false
+MusicFrame.Parent = Main
+
+Round(MusicFrame,12)
+
+local MusicScroll = Instance.new("ScrollingFrame")
+MusicScroll.Size = UDim2.new(1,-10,1,-10)
+MusicScroll.Position = UDim2.new(0,5,0,5)
+MusicScroll.BackgroundTransparency = 1
+MusicScroll.BorderSizePixel = 0
+MusicScroll.ScrollBarThickness = 4
+MusicScroll.Parent = MusicFrame
+
+local MusicLayout = Instance.new("UIListLayout")
+MusicLayout.Padding = UDim.new(0,5)
+MusicLayout.Parent = MusicScroll
+
+local MusicIDs = {
+	"74156338201609",
+	"110919391228823",
+	"110655017987589",
+	"104407363987058",
+	"76056556384462",
+	"86917170271693",
+	"92091993493107",
+	"81148573523623"
+}
+
+local MusicSound = Instance.new("Sound")
+MusicSound.Name = "KIO_BoomBox"
+MusicSound.Volume = 1
+MusicSound.Looped = true
+MusicSound.Parent = Workspace
+
+local function PlayMusic(id)
+	MusicSound:Stop()
+	MusicSound.SoundId = "rbxassetid://"..id
+	MusicSound:Play()
+	Status.Text = "Playing: "..id
+end
+
+for _,id in ipairs(MusicIDs) do
+
+	local button = CreateButton(
+		MusicScroll,
+		id,
+		UDim2.new(1,-5,0,32),
+		UDim2.new()
+	)
+
+	button.MouseButton1Click:Connect(function()
+		PlayMusic(id)
+	end)
+end
+
+local StopMusic = CreateButton(
+	MusicScroll,
+	"STOP MUSIC",
+	UDim2.new(1,-5,0,32),
+	UDim2.new()
+)
+
+StopMusic.MouseButton1Click:Connect(function()
+	MusicSound:Stop()
+	Status.Text = "Music stopped"
+end)
+
+MusicLayout:GetPropertyChangedSignal(
+	"AbsoluteContentSize"
+):Connect(function()
+
+	MusicScroll.CanvasSize = UDim2.new(
+		0,0,
+		0,
+		MusicLayout.AbsoluteContentSize.Y + 10
+	)
+
+end)
+
+BoomboxButton.MouseButton1Click:Connect(function()
+	MusicFrame.Visible = not MusicFrame.Visible
+end)
+
+--==================================================
+-- AIM
+--==================================================
+
+local AimTargetButton = CreateButton(
+	Main,
+	"SELECT NPC",
+	UDim2.new(0,155,0,35),
+	UDim2.new(0,15,0,250)
+)
+
+local PlayerAimButton = CreateButton(
+	Main,
+	"PLAYER AIM: OFF",
+	UDim2.new(0,155,0,35),
+	UDim2.new(0,185,0,250)
+)
+
+PlayerAimButton.Visible = false
+
+--==================================================
+-- AIM FLOAT BUTTON
+--==================================================
+
+local AimButton = Instance.new("TextButton")
+AimButton.Size = UDim2.new(0,75,0,40)
+AimButton.Position = UDim2.new(0,20,0.55,0)
+AimButton.BackgroundColor3 = Color3.fromRGB(15,15,22)
+AimButton.Text = "AIM"
+AimButton.TextColor3 = Color3.new(1,1,1)
+AimButton.Font = Enum.Font.GothamBold
+AimButton.TextSize = 15
+AimButton.Visible = false
+AimButton.Parent = Gui
+
+Round(AimButton,10)
+RainbowStroke(AimButton)
+MakeDraggable(AimButton)
+
+--==================================================
+-- TARGET MENU
+--==================================================
+
+local TargetFrame = Instance.new("Frame")
+TargetFrame.Size = UDim2.new(0,220,0,220)
+TargetFrame.Position = UDim2.new(0.5,-110,0.5,-110)
+TargetFrame.BackgroundColor3 = Color3.fromRGB(18,18,25)
+TargetFrame.Visible = false
+TargetFrame.ZIndex = 50
+TargetFrame.Parent = Gui
+
+Round(TargetFrame,12)
+RainbowStroke(TargetFrame)
+
+local TargetTitle = Instance.new("TextLabel")
+TargetTitle.Size = UDim2.new(1,-10,0,35)
+TargetTitle.Position = UDim2.new(0,5,0,5)
+TargetTitle.BackgroundTransparency = 1
+TargetTitle.Text = "SELECT NPC"
+TargetTitle.TextColor3 = Color3.new(1,1,1)
+TargetTitle.Font = Enum.Font.GothamBold
+TargetTitle.TextSize = 15
+TargetTitle.ZIndex = 51
+TargetTitle.Parent = TargetFrame
+
+local TargetScroll = Instance.new("ScrollingFrame")
+TargetScroll.Size = UDim2.new(1,-10,1,-45)
+TargetScroll.Position = UDim2.new(0,5,0,40)
+TargetScroll.BackgroundTransparency = 1
+TargetScroll.BorderSizePixel = 0
+TargetScroll.ScrollBarThickness = 4
+TargetScroll.ZIndex = 51
+TargetScroll.Parent = TargetFrame
+
+local TargetLayout = Instance.new("UIListLayout")
+TargetLayout.Padding = UDim.new(0,5)
+TargetLayout.Parent = TargetScroll
+
+local function IsValidNPC(model)
+
+	if not model:IsA("Model") then
+		return false
+	end
+
+	for _,player in ipairs(Players:GetPlayers()) do
+		if player.Character == model then
+			return false
+		end
+	end
+
+	local humanoid =
+		model:FindFirstChildOfClass("Humanoid")
+
+	local root =
+		model:FindFirstChild("HumanoidRootPart")
+
+	return humanoid
+		and root
+		and humanoid.Health > 0
+end
+
+local function RefreshTargets()
+
+	for _,child in ipairs(TargetScroll:GetChildren()) do
+		if child:IsA("TextButton") then
+			child:Destroy()
+		end
+	end
+
+	local found = 0
+
+	for _,object in ipairs(Workspace:GetDescendants()) do
+
+		if IsValidNPC(object) then
+
+			found += 1
+
+			local button = CreateButton(
+				TargetScroll,
+				object.Name,
+				UDim2.new(1,-5,0,34),
+				UDim2.new()
+			)
+
+			button.ZIndex = 52
+
+			button.MouseButton1Click:Connect(function()
+
+				if IsValidNPC(object) then
+
+					AimTarget = object
+
+					AimTargetButton.Text =
+						"TARGET: "..object.Name
+
+					Status.Text =
+						"Target: "..object.Name
+
+					TargetFrame.Visible = false
+
+				end
+			end)
+		end
+	end
+
+	if found == 0 then
+
+		local none = Instance.new("TextLabel")
+		none.Size = UDim2.new(1,-5,0,35)
+		none.BackgroundTransparency = 1
+		none.Text = "NO NPC FOUND"
+		none.TextColor3 = Color3.fromRGB(150,150,160)
+		none.Font = Enum.Font.Gotham
+		none.TextSize = 13
+		none.ZIndex = 52
+		none.Parent = TargetScroll
+
+	end
+
+	task.wait()
+
+	TargetScroll.CanvasSize = UDim2.new(
+		0,0,
+		0,
+		TargetLayout.AbsoluteContentSize.Y + 10
+	)
+end
+
+AimTargetButton.MouseButton1Click:Connect(function()
+
+	RefreshTargets()
+
+	TargetFrame.Visible =
+		not TargetFrame.Visible
+end)
+
+--==================================================
+-- PLAYER IN FRONT
+--==================================================
+
+local function GetPlayerInFront()
+
+	if not Character or not Root then
+		return nil
+	end
+
+	local bestPlayer
+	local bestDistance = math.huge
+
+	local lookDirection =
+		Root.CFrame.LookVector
+
+	for _,otherPlayer in ipairs(Players:GetPlayers()) do
+
+		if otherPlayer ~= Player
+			and otherPlayer.Character then
+
+			local char = otherPlayer.Character
+
+			local humanoid =
+				char:FindFirstChildOfClass("Humanoid")
+
+			local targetRoot =
+				char:FindFirstChild("HumanoidRootPart")
+
+			if humanoid
+				and targetRoot
+				and humanoid.Health > 0 then
+
+				local offset =
+					targetRoot.Position - Root.Position
+
+				local distance =
+					offset.Magnitude
+
+				if distance > 0 then
+
+					local direction =
+						offset.Unit
+
+					local dot =
+						lookDirection:Dot(direction)
+
+					if dot > 0.5
+						and distance < bestDistance then
+
+						bestDistance = distance
+						bestPlayer = otherPlayer
+					end
+				end
+			end
+		end
+	end
+
+	return bestPlayer
+end
+
+--==================================================
+-- AIM LOOP
+--==================================================
+
+local function StartAim()
+
+	if AimConnection then
+		AimConnection:Disconnect()
+	end
+
+	AimConnection =
+		RunService.RenderStepped:Connect(function()
+
+			if not AimEnabled then
+				return
+			end
+
+			-- PLAYER AIM
+			if PlayerAimEnabled then
+
+				local targetPlayer =
+					GetPlayerInFront()
+
+				if targetPlayer
+					and targetPlayer.Character then
+
+					local targetRoot =
+						targetPlayer.Character:
+						FindFirstChild("HumanoidRootPart")
+
+					if targetRoot then
+
+						Status.Text =
+							"Player: "..targetPlayer.Name
+
+						local camera =
+							Workspace.CurrentCamera
+
+						if camera then
+
+							camera.CFrame =
+								CFrame.lookAt(
+									camera.CFrame.Position,
+									targetRoot.Position
+								)
+
+						end
+					end
+				else
+
+					Status.Text =
+						"PLAYER AIM: No player"
+
+				end
+
+				return
+			end
+
+			-- NPC AIM
+			if AimTarget
+				and AimTarget.Parent then
+
+				local humanoid =
+					AimTarget:
+					FindFirstChildOfClass("Humanoid")
+
+				local targetRoot =
+					AimTarget:
+					FindFirstChild("HumanoidRootPart")
+
+				if humanoid
+					and targetRoot
+					and humanoid.Health > 0 then
+
+					local camera =
+						Workspace.CurrentCamera
+
+					if camera then
+
+						camera.CFrame =
+							CFrame.lookAt(
+								camera.CFrame.Position,
+								targetRoot.Position
+							)
+
+					end
+
+				else
+
+					AimTarget = nil
+					AimTargetButton.Text =
+						"SELECT NPC"
+
+					Status.Text =
+						"Target lost"
+
+				end
+			end
+
+		end)
+end
+
+--==================================================
+-- AIM TOGGLE
+--==================================================
+
+local function SetAim(state)
+
+	AimEnabled = state
+
+	if AimEnabled then
+
+		AimToggle.Text = "AIM: ON"
+		AimButton.Visible = true
+		PlayerAimButton.Visible = true
+
+		Status.Text = "AIM ON"
+
+		StartAim()
+
+	else
+
+		AimToggle.Text = "AIM: OFF"
+		AimButton.Visible = false
+		PlayerAimButton.Visible = false
+
+		Status.Text = "Ready"
+
+		if AimConnection then
+			AimConnection:Disconnect()
+			AimConnection = nil
+		end
+	end
+end
+
+AimToggle.MouseButton1Click:Connect(function()
+	SetAim(not AimEnabled)
+end)
+
+AimButton.MouseButton1Click:Connect(function()
+	SetAim(not AimEnabled)
+end)
+
+PlayerAimButton.MouseButton1Click:Connect(function()
+
+	PlayerAimEnabled =
+		not PlayerAimEnabled
+
+	if PlayerAimEnabled then
+
+		PlayerAimButton.Text =
+			"PLAYER AIM: ON"
+
+		Status.Text =
+			"Player Aim: ON"
+
+	else
+
+		PlayerAimButton.Text =
+			"PLAYER AIM: OFF"
+
+		Status.Text =
+			"Player Aim: OFF"
+
+	end
+end)
+
+--==================================================
+-- NOCLIP
+--==================================================
+
+local OriginalCollision = {}
+
+NoclipToggle.MouseButton1Click:Connect(function()
+
+	NoclipEnabled =
+		not NoclipEnabled
+
+	if NoclipEnabled then
+
+		NoclipToggle.Text =
+			"NOCLIP: ON"
+
+		if NoclipConnection then
+			NoclipConnection:Disconnect()
+		end
+
+		NoclipConnection =
+			RunService.Stepped:Connect(function()
+
+				if not Character then
+					return
+				end
+
+				for _,part in ipairs(
+					Character:GetDescendants()
+				) do
+
+					if part:IsA("BasePart") then
+
+						if OriginalCollision[part] == nil then
+							OriginalCollision[part] =
+								part.CanCollide
+						end
+
+						part.CanCollide = false
+					end
+				end
+			end)
+
+	else
+
+		NoclipT
